@@ -1,32 +1,48 @@
 # Economic Shock Analysis
 
-A small Python pipeline that loads public economic indicators into SQLite and calculates pre/post-shock changes.
+A Python pipeline that downloads public economic indicators, stores them in SQLite, and calculates pre/post-shock changes.
 
-## Structure
+## Prerequisites
 
-- `data_collection/`: source-specific download and load scripts
-- `processing/`: impact calculations
-- `storage/`: SQLite schema
-- `deploy/`: local database initialization
-- `utils/`: shared configuration and database helpers
+- Windows with Python 3.11 or newer
+- Internet access for the World Bank, ECB, oil-price, and OECD downloads
+- PowerShell or Command Prompt
+- No PostgreSQL server, database, username, or API key is required for the default collectors
 
-## Setup
+## First-time setup
+
+Open a terminal in the repository root (`D:\EconomicShockAnalysis`) and run:
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -m deploy.setup_db
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m deploy.setup_db
 ```
 
-Run collectors from the repository root so package imports resolve consistently:
+Using `.venv\Scripts\python.exe` avoids accidentally using a different Python interpreter. In PowerShell, you can activate the environment first:
 
 ```powershell
-python -m data_collection.fetch_worldbank_gdp
-python -m data_collection.fetch_ecb_exchange
-python -m data_collection.fetch_oil_price
-python -m data_collection.fetch_oecd_cpi
-python -m processing.compute_impact
+.venv\Scripts\Activate.ps1
 ```
 
-The FRED collector requires a `fred` section with `base_url` and `api_key` in `sources.yaml`.
+In Command Prompt, use:
+
+```cmd
+.venv\Scripts\activate.bat
+```
+
+## Run the pipeline
+
+Always run these commands from the repository root. Use `-m`; do not run a file directly such as `python data_collection\fetch_worldbank_gdp.py`, because the shared `utils` package will not be found.
+
+```powershell
+.venv\Scripts\python.exe -m data_collection.fetch_worldbank_gdp
+.venv\Scripts\python.exe -m data_collection.fetch_ecb_exchange
+.venv\Scripts\python.exe -m data_collection.fetch_oil_price
+.venv\Scripts\python.exe -m data_collection.fetch_oecd_cpi
+.venv\Scripts\python.exe -m processing.compute_impact
+```
+
+The setup command creates `economic_shock.db`, seeds the countries and indicators, and loads the shocks from `data_collection\shocks.csv`.
+
+FRED is optional. Its collector requires a `fred` section with `base_url` and `api_key` in `sources.yaml` before it can run.
