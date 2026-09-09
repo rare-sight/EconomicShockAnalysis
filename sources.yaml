@@ -1,15 +1,6 @@
 # sources.yaml
 # Configuration for data sources used in the Economic Shock Impact Analysis pipeline.
 
-# Database connection settings (will be used by all Python scripts)
-
-database:
-  host: localhost
-  port: 5432
-  dbname: economic_shock
-  user: your_username
-  password: your_password
-
 # World Bank API configuration (free)
 world_bank:
   base_url: https://api.worldbank.org/v2
@@ -18,15 +9,13 @@ world_bank:
 # European Central Bank (ECB) provides daily exchange rates as CSV.
 # Example URL for ECB exchange rates (historical EUR base rates)
 ecb:
-  exchange_rates_url: https://raw.githubusercontent.com/datasets/exchange-rates/master/data/eurofxref-hist.csv
+  exchange_rates_url: https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.csv
 
 # Oil price data – free CSV from public GitHub repository (Brent daily price)
 # Columns: Date,Price
 oil_price:
   csv_url: https://raw.githubusercontent.com/datasets/oil-prices/master/data/brent-daily.csv
 
-# CPI inflation data – free CSV from OECD (example placeholder). Users can add per‑country URLs.
-# URL pattern: https://stats.oecd.org/sdmx-json/data/MEI_CPI/{country}.CSV
-# We'll store the base URL and compose the final URL in the script.
-oecd_cpi:
-  base_url: https://stats.oecd.org/sdmx-json/data/MEI_CPI
+# Annual CPI inflation data from the World Bank API.
+cpi:
+  base_url: https://api.worldbank.org/v2
