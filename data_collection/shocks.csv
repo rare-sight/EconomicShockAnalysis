@@ -1,6 +1,2 @@
-shock_id,name,start_date,end_date,description
-1,COVID-19,2020-03-01,2021-06-01,"Global pandemic starting March 2020"
-2,Russia-Ukraine War,2022-02-24,2023-12-31,"Russia's invasion of Ukraine"
-3,2022 Energy Crisis,2022-08-01,2022-12-31,"Sharp rise in energy prices"
-4,US Rate Tightening,2022-06-15,2023-06-15,"Federal Reserve rate hikes"
-5,Oil Price Shock,2020-04-20,2020-09-30,"Oil price collapse and rebound"
+shock_id,name,start_date,end_date,description,baseline_start_year,baseline_end_year,shock_year,recovery_start_year,recovery_end_year
+1,COVID-19,2020-01-01,2020-12-31,"Annual methodology: 2017-2019 baseline, 2020 shock year, 2021-2024 recovery period.",2017,2019,2020,2021,2024

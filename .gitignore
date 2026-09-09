@@ -17,6 +17,8 @@ env/
 # Data
 *.csv
 *.xlsx
+*.db
+outputs/
 
 # OS
 .DS_Store

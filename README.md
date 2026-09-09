@@ -19,7 +19,7 @@ Open a terminal in the repository root (`D:\EconomicShockAnalysis`) and run:
 ```powershell
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m deploy.setup_db
+.venv\Scripts\python.exe -m deploy.setup_db --reset
 ```
 
 Using `.venv\Scripts\python.exe` avoids accidentally using a different Python interpreter. In PowerShell, you can activate the environment first:
@@ -39,23 +39,33 @@ In Command Prompt, use:
 Always run these commands from the repository root. Use `-m`; do not run a file directly such as `python data_collection\fetch_worldbank_gdp.py`, because the shared `utils` package will not be found.
 
 ```powershell
-.venv\Scripts\python.exe -m data_collection.fetch_worldbank_gdp
-.venv\Scripts\python.exe -m data_collection.fetch_ecb_exchange
+.venv\Scripts\python.exe -m data_collection.fetch_worldbank_indicators
 .venv\Scripts\python.exe -m data_collection.fetch_oil_price
-.venv\Scripts\python.exe -m data_collection.fetch_oecd_cpi
 .venv\Scripts\python.exe -m processing.compute_impact
 .venv\Scripts\python.exe -m analysis.visualize
+.venv\Scripts\python.exe -m analysis.validate_pipeline
 ```
 
-The setup command creates `economic_shock.db`, seeds the countries and indicators, and loads the shocks from `data_collection\shocks.csv`.
+The setup command recreates the generated `economic_shock.db`, seeds the five
+countries and indicator metadata, and loads the documented shock methodology
+from `data_collection\shocks.csv`.
 
-The `fetch_oecd_cpi` module name is retained for compatibility, but CPI data is now loaded from the World Bank API because the previous OECD CSV endpoint is no longer available.
+The World Bank collector loads annual GDP growth, consumer-price inflation,
+unemployment, official exchange rates, and FDI for 2017–2024. Inflation is a
+rate, not a CPI index; it is therefore reported as a percentage-point change.
 
 The export command creates the following files in `outputs\power_bi`:
 
 - `fact_shock_impacts.csv` — calculated pre/post-shock changes; use this for the main analysis.
 - `fact_indicator_values.csv` — every raw source observation with its date, country and indicator.
 - `dim_countries.csv`, `dim_indicators.csv`, `dim_shocks.csv` — optional lookup tables for a Power BI star schema.
+- `summary_impact_by_shock_indicator.csv` — a separate country-average summary, not a replacement for detailed results.
+- `summary_country_recovery.csv` — unweighted country recovery metrics, separated by change type.
+- `shock_impact_by_indicator.png` — one panel per indicator, so percentage-point and percent changes are never plotted on one axis.
+- `validation_report.txt` — source-data and calculation validation results.
+
+`outputs\shock_impacts.csv` is also created for compatibility; it contains the
+same detailed rows as `fact_shock_impacts.csv`.
 
 In Power BI Desktop, choose **Get data → Text/CSV** and load the CSV files from
 `outputs\power_bi`. Set `period`, `shock_start_date`, and `shock_end_date` to
