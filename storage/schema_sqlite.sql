@@ -13,13 +13,22 @@ CREATE TABLE IF NOT EXISTS shocks (
     name TEXT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE,
-    description TEXT
+    description TEXT,
+    baseline_start_year INTEGER NOT NULL,
+    baseline_end_year INTEGER NOT NULL,
+    shock_year INTEGER NOT NULL,
+    recovery_start_year INTEGER NOT NULL,
+    recovery_end_year INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS indicators (
     indicator_code TEXT PRIMARY KEY,
     display_name TEXT NOT NULL,
-    unit TEXT
+    description TEXT NOT NULL,
+    unit TEXT NOT NULL,
+    frequency TEXT NOT NULL,
+    source TEXT NOT NULL,
+    change_type TEXT NOT NULL CHECK (change_type IN ('percentage_points', 'percent'))
 );
 
 CREATE TABLE IF NOT EXISTS indicator_values (
@@ -37,9 +46,12 @@ CREATE TABLE IF NOT EXISTS shock_impacts (
     shock_id INTEGER NOT NULL,
     country_iso TEXT NOT NULL,
     indicator TEXT NOT NULL,
-    pre_average REAL,
-    post_average REAL,
+    pre_value REAL,
+    shock_value REAL,
+    post_value REAL,
+    absolute_change REAL,
     pct_change REAL,
+    change_type TEXT NOT NULL,
     calc_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (shock_id) REFERENCES shocks(shock_id),
     FOREIGN KEY (country_iso) REFERENCES countries(iso_code),

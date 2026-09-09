@@ -1,52 +1,58 @@
-"""Calculate pre- and post-shock averages for each series."""
-
-from datetime import date, timedelta
+"""Calculate annual baseline, shock-year, and recovery impacts by country."""
 
 from utils.db import get_connection
-
-
-PRE_PERIOD_QUARTERS = 4
-POST_PERIOD_QUARTERS = 4
-DAYS_PER_QUARTER = 91
-
-
-def period_offset(start, quarters):
-    return start - timedelta(days=quarters * DAYS_PER_QUARTER)
+from utils.validation import validate_data
 
 
 def main():
     with get_connection() as connection:
+        validate_data(connection)
         shocks = connection.execute(
-            "SELECT shock_id, name, start_date FROM shocks"
+            """SELECT shock_id, name, baseline_start_year, baseline_end_year,
+                      shock_year, recovery_start_year, recovery_end_year
+               FROM shocks"""
         ).fetchall()
-        for shock_id, name, start_date_text in shocks:
-            start_date = date.fromisoformat(start_date_text)
-            pre_start = period_offset(start_date, PRE_PERIOD_QUARTERS)
-            pre_end = start_date - timedelta(days=1)
-            post_end = start_date + timedelta(days=POST_PERIOD_QUARTERS * DAYS_PER_QUARTER - 1)
+        for shock_id, name, baseline_start, baseline_end, shock_year, recovery_start, recovery_end in shocks:
 
+            connection.execute(
+                "DELETE FROM shock_impacts WHERE shock_id = ?",
+                (shock_id,),
+            )
             connection.execute(
                 """
                 INSERT OR REPLACE INTO shock_impacts
-                    (shock_id, country_iso, indicator, pre_average, post_average, pct_change)
+                    (shock_id, country_iso, indicator, pre_value, shock_value, post_value,
+                     absolute_change, pct_change, change_type)
                 WITH pre AS (
                     SELECT country_iso, indicator, AVG(value) AS average
                     FROM indicator_values
-                    WHERE period BETWEEN ? AND ?
+                    WHERE CAST(substr(period, 1, 4) AS INTEGER) BETWEEN ? AND ?
+                    GROUP BY country_iso, indicator
+                ), shock AS (
+                    SELECT country_iso, indicator, AVG(value) AS value
+                    FROM indicator_values
+                    WHERE CAST(substr(period, 1, 4) AS INTEGER) = ?
                     GROUP BY country_iso, indicator
                 ), post AS (
                     SELECT country_iso, indicator, AVG(value) AS average
                     FROM indicator_values
-                    WHERE period BETWEEN ? AND ?
+                    WHERE CAST(substr(period, 1, 4) AS INTEGER) BETWEEN ? AND ?
                     GROUP BY country_iso, indicator
                 )
-                SELECT ?, pre.country_iso, pre.indicator, pre.average, post.average,
-                       CASE WHEN pre.average = 0 THEN NULL
-                            ELSE (post.average - pre.average) / pre.average * 100 END
+                SELECT ?, pre.country_iso, pre.indicator, pre.average, shock.value, post.average,
+                       post.average - pre.average,
+                       CASE WHEN indicators.change_type = 'percent' AND pre.average != 0
+                            THEN (post.average - pre.average) / pre.average * 100 END,
+                       indicators.change_type
                 FROM pre
+                JOIN shock USING (country_iso, indicator)
                 JOIN post USING (country_iso, indicator)
+                JOIN indicators ON indicators.indicator_code = pre.indicator
                 """,
-                (pre_start, pre_end, start_date, post_end, shock_id),
+                (
+                    baseline_start, baseline_end, shock_year, recovery_start, recovery_end,
+                    shock_id,
+                ),
             )
             print(f"Calculated impact for '{name}' (ID {shock_id}).")
 

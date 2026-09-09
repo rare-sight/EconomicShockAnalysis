@@ -6,6 +6,10 @@ from utils.config import load_config
 from utils.db import get_connection
 
 
+START_DATE = "2017-01-01"
+END_DATE = "2024-12-31"
+
+
 def main():
     config = load_config()
     data = pd.read_csv(config["oil_price"]["csv_url"])
@@ -13,9 +17,10 @@ def main():
     if not {"date", "price"}.issubset(data.columns):
         raise ValueError("Oil CSV must contain date and price columns")
 
-    data["date"] = pd.to_datetime(data["date"]).dt.date
+    data["date"] = pd.to_datetime(data["date"])
+    data = data[data["date"].between(START_DATE, END_DATE)]
     records = [
-        (period, float(price))
+        (period.date().isoformat(), float(price))
         for period, price in data[["date", "price"]].dropna().itertuples(index=False)
     ]
 
@@ -23,7 +28,7 @@ def main():
         connection.executemany(
             """
             INSERT INTO indicator_values (country_iso, indicator, period, value)
-            VALUES ('GLOBAL', 'OIL_BRN', ?, ?)
+            VALUES ('GLOBAL', 'OIL_BRENT', ?, ?)
             ON CONFLICT(country_iso, indicator, period) DO UPDATE SET value = excluded.value
             """,
             records,
